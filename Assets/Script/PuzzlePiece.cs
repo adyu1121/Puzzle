@@ -6,10 +6,13 @@ using UnityEngine.EventSystems;
 public class PuzzlePiece : MonoBehaviour,IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public static PuzzlePiece movePiece = null;
-    private CanvasGroup canvasGroup;
 
-    private List<PuzzleSet> pieceSet = new();
+    private CanvasGroup canvasGroup;
+    private PuzzleSet[] pieceSet = null;
     private static List<PuzzlePiece> pieces = new();
+
+    public Vector2Int[] Size; 
+    public Color ColorCode;
     private void Awake()
     {
         canvasGroup = GetComponent<CanvasGroup>();
@@ -17,29 +20,47 @@ public class PuzzlePiece : MonoBehaviour,IBeginDragHandler, IDragHandler, IEndDr
     }
     public void OnBeginDrag(PointerEventData eventData)
     {
+        pieces.ForEach(piece => piece.PieceMoveIn());
+
         movePiece = this;
         transform.SetAsLastSibling();
-        pieces.ForEach(piece => piece.PieceMoveIn());
-        pieceSet.ForEach(set=> set.SetPiece = null);
-        pieceSet.Clear();
+        OutPiece();
+
+        pieceSet = null;
     }
     public void OnDrag(PointerEventData eventData)
     {
         transform.position = eventData.position;
     }
-
     public void OnEndDrag(PointerEventData eventData)
     {
-        movePiece = null;
         pieces.ForEach(x => x.PieceMoveOut());
-        if (pieceSet.Count == 0)
+
+        movePiece = null;
+        transform.SetAsFirstSibling();
+
+        if (pieceSet == null)
         {
             transform.position = Puzzle.instance.nullPos.transform.position;
         }
     }
-    public void AddSet(PuzzleSet set)
+    public void SetPiece(PuzzleSet[] sets, Vector2 pos)
     {
-        pieceSet.Add(set);
+        pieceSet = sets;
+        transform.position = pos;
+        transform.SetAsFirstSibling();
+        foreach(var set in sets)
+        {
+            set.SetPiece = this;
+        }
+    }
+    public void OutPiece()
+    {
+        if (pieceSet == null) return;
+        foreach (var set in pieceSet)
+        {
+            set.SetPiece = null;
+        }
     }
     public void PieceMoveIn()
     {
